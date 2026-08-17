@@ -198,20 +198,41 @@ void openDoor1(){
 
 void openDoor2(){
 
-  tft.fillRect(15, 90, 30, 60, 0x1861); tft.fillCircle(35, 127, 2.5, ST77XX_WHITE); tft.drawRect(19, 135, 22, 12, ST77XX_YELLOW); tft.drawRect(19, 95, 22, 25, ST77XX_YELLOW);
+  tft.fillRect(105, 90, 30, 60, ST77XX_BLUE); tft.fillCircle(125, 127, 2.5, ST77XX_WHITE); tft.drawRect(109, 135, 22, 12, ST77XX_YELLOW); tft.drawRect(109, 95, 22, 25, ST77XX_YELLOW);
 
   delay(200);
 
   tft.fillScreen(ST77XX_BLACK);
 
 
-  tft.fillRect(15, 90, 30/2, 60, 0x1861); tft.fillCircle(35-12, 127, 1, ST77XX_WHITE); tft.drawRect(19, 135, 22/3, 12, ST77XX_YELLOW); tft.drawRect(19, 95, 22/3, 25, ST77XX_YELLOW);
+  tft.fillRect(105, 90, 30/2, 60, ST77XX_BLUE); tft.fillCircle(125-12, 127, 1, ST77XX_WHITE); tft.drawRect(109, 135, 22/3, 12, ST77XX_YELLOW); tft.drawRect(109, 95, 22/3, 25, ST77XX_YELLOW);
 
   delay(100);
 
   tft.fillScreen(ST77XX_BLACK);
 
-  tft.fillRect(15, 90, 2, 60, 0x1861);
+  tft.fillRect(105, 90, 2, 60, ST77XX_BLUE);
+
+  delay(200);
+  
+}
+
+void openDoor3(){
+
+  tft.fillRect(195, 90, 30, 60, ST77XX_BLUE); tft.fillCircle(215, 127, 2.5, ST77XX_WHITE); tft.drawRect(199, 135, 22, 12, ST77XX_YELLOW); tft.drawRect(199, 95, 22, 25, ST77XX_YELLOW);
+
+  delay(200);
+
+  tft.fillScreen(ST77XX_BLACK);
+
+
+  tft.fillRect(195, 90, 30/2, 60, ST77XX_BLUE); tft.fillCircle(215-12, 127, 1, ST77XX_WHITE); tft.drawRect(199, 135, 22/3, 12, ST77XX_YELLOW); tft.drawRect(199, 95, 22/3, 25, ST77XX_YELLOW);
+
+  delay(100);
+
+  tft.fillScreen(ST77XX_BLACK);
+
+  tft.fillRect(195, 90, 2, 60, ST77XX_BLUE);
 
   delay(200);
   
