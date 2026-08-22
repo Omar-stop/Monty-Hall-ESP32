@@ -60,10 +60,9 @@ void setup() {
   tft.drawLine(0, 0, 240, 240, ST77XX_WHITE); //Diagonal up left to down right
   tft.drawLine(0, 240, 240, 0, ST77XX_WHITE); //Diagonal down left to up right
 
-  //Door frame                        ; Door knob                                 ; Lower Rectangle                             ; Upper rectangle
-  tft.fillRect(15, 90, 30, 60, 0x1861); tft.fillCircle(35, 127, 2, ST77XX_WHITE); tft.drawRect(19, 135, 22, 12, ST77XX_YELLOW); tft.drawRect(19, 95, 22, 25, ST77XX_YELLOW);
-  tft.fillRect(105, 90, 30, 60, 0x1861); tft.fillCircle(125, 127, 2, ST77XX_WHITE); tft.drawRect(109, 135, 22, 12, ST77XX_YELLOW); tft.drawRect(109, 95, 22, 25, ST77XX_YELLOW);
-  tft.fillRect(195, 90, 30, 60, 0x1861); tft.fillCircle(215, 127, 2, ST77XX_WHITE); tft.drawRect(199, 135, 22, 12, ST77XX_YELLOW); tft.drawRect(199, 95, 22, 25, ST77XX_YELLOW);
+  drawDoor_1();
+  drawDoor_2();
+  drawDoor_3();  
 
   tft.drawRect(25, 160, 10, 10, ST77XX_GREEN);
   tft.drawRect(115, 160, 10, 10, ST77XX_GREEN);
@@ -72,20 +71,66 @@ void setup() {
   tft.setCursor(5, 220);
   tft.setTextSize(2);
   tft.print("-Choose any door");
-  
+
 }
 
 void loop() {
 
   int firstDoorChoice = firstChoice();
-  if(btnOk.pressed())openDoor(firstDoorChoice);
+
+  if(btnOk.pressed()){
+
+    //openDoor(firstDoorChoice);
+    firstChoiceMarker(firstDoorChoice);
+
+  }
 
   btnLeft.update();
   btnRight.update();
   btnOk.update();
 
-  //1-Next draw the gold shape, 2-Function: generate a random number for the winning door, 3-Function: opens an empty door or any door if 
+  //2-generate a random number for the winning door, 3-Function: opens an empty door or any door if 
   //the golden door was chosen correctly first try.
+
+}
+
+int firstChoice(){
+
+  static int choice = 0;
+
+  if(btnLeft.pressed()){choice--; if(choice < 0){choice = 2;};}
+  else if(btnRight.pressed()){choice++; if(choice > 2){choice = 0;};}
+
+  switch(choice){
+
+    case 0: pickDoor1(); unpickDoor2(); unpickDoor3(); break;
+    case 1: pickDoor2(); unpickDoor1(); unpickDoor3(); break;
+    case 2: pickDoor3(); unpickDoor2(); unpickDoor1(); break;
+    default: unpickDoor1(); unpickDoor2(); unpickDoor3(); break;
+
+  }
+
+  if(btnOk.pressed())return choice;
+
+}
+
+void firstChoiceMarker(int choice){
+
+  switch (choice) {
+  
+    case 0: tft.setCursor(25, 173); tft.fillRect(115, 173, 10, 10, ST77XX_BLACK); tft.fillRect(205, 173, 10, 10, ST77XX_BLACK); break;
+
+    case 1: tft.setCursor(115, 173); tft.fillRect(25, 173, 10, 10, ST77XX_BLACK); tft.fillRect(205, 173, 10, 10, ST77XX_BLACK); break;
+
+    case 2: tft.setCursor(205, 173); tft.fillRect(115, 173, 10, 10, ST77XX_BLACK); tft.fillRect(25, 173, 10, 10, ST77XX_BLACK); break;
+
+    default: break;
+
+  }
+
+  tft.setTextSize(2);
+  tft.setTextColor(ST77XX_WHITE);
+  tft.write("^");
 
 }
 
@@ -210,26 +255,6 @@ static bool holdOn(int time){
 
 }
 
-int firstChoice(){
-
-  static int choice = 0;
-
-  if(btnLeft.pressed()){choice--; if(choice < 0){choice = 2;};}
-  else if(btnRight.pressed()){choice++; if(choice > 2){choice = 0;};}
-
-  switch(choice){
-
-    case 0: pickDoor1(); unpickDoor2(); unpickDoor3(); break;
-    case 1: pickDoor2(); unpickDoor1(); unpickDoor3(); break;
-    case 2: pickDoor3(); unpickDoor2(); unpickDoor1(); break;
-    default: unpickDoor1(); unpickDoor2(); unpickDoor3(); break;
-
-  }
-
-  if(btnOk.pressed())return choice;
-
-}
-
 void openDoor(int num){
 
   switch (num) {
@@ -240,6 +265,59 @@ void openDoor(int num){
     default: break;
 
   }
+
+}
+
+void drawCoin_1(){
+
+  tft.fillCircle(30, 125, 10, ST77XX_YELLOW);
+  tft.setCursor(25, 121);
+  tft.setTextSize(2);
+  tft.setTextColor(ST77XX_BLACK);
+  tft.write("$");
+
+}
+
+void drawCoin_2(){
+
+  tft.fillCircle(120, 125, 10, ST77XX_YELLOW);
+  tft.setCursor(115, 121);
+  tft.setTextSize(2);
+  tft.setTextColor(ST77XX_BLACK);
+  tft.write("$");
+
+}
+
+void drawCoin_3(){
+
+  tft.fillCircle(210, 125, 10, ST77XX_YELLOW);
+  tft.setCursor(205, 121);
+  tft.setTextSize(2);
+  tft.setTextColor(ST77XX_BLACK);
+  tft.write("$");
+
+}
+
+void drawDoor_1(){
+
+  //Door frame                        ; Door knob                               ; Lower Rectangle                             ; Upper rectangle
+  tft.fillRect(15, 90, 30, 60, 0x1861); tft.fillCircle(35, 127, 2, ST77XX_WHITE); tft.drawRect(19, 135, 22, 12, ST77XX_YELLOW); tft.drawRect(19, 95, 22, 25, ST77XX_YELLOW);
+
+}
+
+void drawDoor_2(){
+
+  //Door frame                         ; Door knob                                ; Lower Rectangle                              ; Upper rectangle
+  tft.fillRect(105, 90, 30, 60, 0x1861); tft.fillCircle(125, 127, 2, ST77XX_WHITE); tft.drawRect(109, 135, 22, 12, ST77XX_YELLOW); tft.drawRect(109, 95, 22, 25, ST77XX_YELLOW);
+
+
+}
+
+void drawDoor_3(){
+
+  //Door frame                         ; Door knob                                ; Lower Rectangle                              ; Upper rectangle
+  tft.fillRect(195, 90, 30, 60, 0x1861); tft.fillCircle(215, 127, 2, ST77XX_WHITE); tft.drawRect(199, 135, 22, 12, ST77XX_YELLOW); tft.drawRect(199, 95, 22, 25, ST77XX_YELLOW);
+  
 
 }
 
