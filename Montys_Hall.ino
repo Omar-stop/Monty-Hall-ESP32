@@ -58,6 +58,8 @@ void setup() {
 
   Serial.begin(115200);
 
+  srand(time(0));
+
   btnLeft.setPinMode();
   btnRight.setPinMode();
   btnOk.setPinMode();
@@ -446,7 +448,6 @@ void drawChoiceBoxs(){
 
 int randomDoor(){
 
-  srand(time(0));
   int randomNum = rand() % 3;
 
   inRandomDoor = false;
@@ -490,7 +491,6 @@ int openNonePrize(int firstDoorChoice, int prizeDoor){
 
     do{
 
-      srand(time(0));
       nonePrizeDoor = rand() % 3;
 
     }while(nonePrizeDoor == prizeDoor);
@@ -546,7 +546,7 @@ void changeChoice(int &firstChoice, int &nonePrizeDoor, int prizeDoor){
     openDoor(prizeDoor);
     drawCoin(prizeDoor);
 
-    Serial.print("yaaaaaas win");
+    Serial.println("yaaaaaas win");
 
     changeDoor = false;
 
@@ -556,16 +556,9 @@ void changeChoice(int &firstChoice, int &nonePrizeDoor, int prizeDoor){
 
   else if(firstChoice == prizeDoor){
 
-    int unknownDoor;
+    int unknownDoor = 3 - firstChoice - nonePrizeDoor;
 
-    do{
-
-      srand(time(0));
-      unknownDoor = rand() % 3;
-
-    }while(unknownDoor == firstChoice || unknownDoor == nonePrizeDoor);
-
-    Serial.print("noooo lose");
+    Serial.println("noooo lose");
 
     ChoiceMarker(unknownDoor);
     changeDoor = false;
