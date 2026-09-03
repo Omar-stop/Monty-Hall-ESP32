@@ -52,6 +52,7 @@ bool resetScreen = true;
 bool inChangeDialogue = false;
 bool inchangeChoiceBox = false;
 bool changeDoor = false;
+bool noChangeDoor = false;
 
 void setup() {
 
@@ -100,26 +101,6 @@ void loop() {
 
   if(inPhase_1) firstChoice = phase_1();
 
-  // if(randomPrizeDoor == firstChoice){ // should change it to open a random door because the game does not end here...
-
-  //   tft.fillScreen(ST77XX_BLACK);
-  //   tft.setCursor(5, 120);
-  //   tft.setTextSize(2);
-  //   tft.print("You win!\nwe will reset now ;)");
-
-  //   delay(3000);
-
-  //   tft.fillScreen(ST77XX_BLACK);
-
-  //   inRandomDoor = true;
-  //   inPhase_1 = true;
-  //   resetScreen = true;
-
-  //   firstChoice = -1;
-  //   nonePrizeDoor = -2;
-
-  // }
-
   if(inOpenNonePrize){
 
     loading(3000);
@@ -145,6 +126,37 @@ void loop() {
     changeChoice(firstChoice, nonePrizeDoor, randomPrizeDoor);
 
   }
+
+  if(noChangeDoor){
+
+  if(firstChoice == randomPrizeDoor){
+
+    openDoor(firstChoice);
+    drawCoin(firstChoice);
+
+    Serial.println("yaaaaaas win");
+
+    //loading(3000);
+
+    //store the fact that you changed choice and the win and increment total games -----------------------------------------
+
+    noChangeDoor = false;
+    resetAll(firstChoice, nonePrizeDoor);
+
+  }
+
+  else if(firstChoice != randomPrizeDoor){
+
+    Serial.println("noooo lose");
+    
+    //loading(3000);
+
+    noChangeDoor = false;
+    resetAll(firstChoice, nonePrizeDoor);
+
+  }
+
+}
 
   //int changeChoice(firstChoice, randomPrizeDoor); new function, complete it
 
@@ -515,8 +527,18 @@ void loading(int time){
 
 }
 
-void changeChoice(int firstChoice, int nonePrizeDoor, int prizeDoor){
+void resetAll(int &firstChoice, int &nonePrizeDoor){
 
+  tft.fillScreen(ST77XX_BLACK);
+  inRandomDoor = true;
+  inPhase_1 = true;
+  resetScreen = true;
+  firstChoice = -1;
+  nonePrizeDoor = -2;
+
+}
+
+void changeChoice(int &firstChoice, int &nonePrizeDoor, int prizeDoor){
 
   if(firstChoice != prizeDoor){
 
@@ -527,6 +549,8 @@ void changeChoice(int firstChoice, int nonePrizeDoor, int prizeDoor){
     Serial.print("yaaaaaas win");
 
     changeDoor = false;
+
+    resetAll(firstChoice, nonePrizeDoor);
 
   }
 
@@ -541,10 +565,12 @@ void changeChoice(int firstChoice, int nonePrizeDoor, int prizeDoor){
 
     }while(unknownDoor == firstChoice || unknownDoor == nonePrizeDoor);
 
-    Serial.print("noooo win");
+    Serial.print("noooo lose");
 
     ChoiceMarker(unknownDoor);
     changeDoor = false;
+
+    resetAll(firstChoice, nonePrizeDoor);
 
   }
 
@@ -573,8 +599,8 @@ bool changeChoiceBox(){
     inchangeChoiceBox = false;
     switch(choice){
 
-      case 0: return true; break;
-      case 1: return false; break;
+      case 0: Serial.print("YES change DOOR: "); return true; break;
+      case 1: noChangeDoor = true; Serial.print("NO change DOOR: "); return false; break;
       default: break;
 
     }
