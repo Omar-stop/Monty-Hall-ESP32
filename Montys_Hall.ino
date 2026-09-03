@@ -34,6 +34,13 @@ Button btnLeft(btnLeftPin);
 Button btnRight(btnRightPin);
 Button btnOk(btnOkPin);
 
+Preferences preferences;
+
+int Ttl_Change_Att = 0;
+int Ttl_NChange_Att = 0;
+int Change_Cnt_W = 0;
+int NChange_Cnt_W = 0;
+
 // enum Door{
 
 //   door_1 = 0,
@@ -59,6 +66,13 @@ void setup() {
   Serial.begin(115200);
 
   srand(time(0));
+
+  preferences.begin("store", false);
+
+  Ttl_Change_Att = preferences.getInt("Ttl_Change_Att", 0);
+  Ttl_NChange_Att = preferences.getInt("Ttl_NChange_Att", 0);
+  Change_Cnt_W = preferences.getInt("Change_Cnt_W", 0);
+  NChange_Cnt_W = preferences.getInt("NChange_Cnt_W", 0);
 
   btnLeft.setPinMode();
   btnRight.setPinMode();
@@ -140,7 +154,7 @@ void loop() {
 
     //loading(3000);
 
-    //store the fact that you changed choice and the win and increment total games -----------------------------------------
+    NChange_Cnt_W++;
 
     noChangeDoor = false;
     resetAll(firstChoice, nonePrizeDoor);
@@ -187,20 +201,29 @@ void loop() {
 int chooseDoor(){
 
   static int choice = 0;
+  static bool refresh = true;
 
-  if(btnLeft.pressed()){choice--; if(choice < 0){choice = 2;};}
-  else if(btnRight.pressed()){choice++; if(choice > 2){choice = 0;};}
+  if(btnLeft.pressed()){choice--; refresh = true; if(choice < 0){choice = 2;};}
+  else if(btnRight.pressed()){choice++; refresh = true; if(choice > 2){choice = 0;};}
 
-  switch(choice){
+  if(refresh){
 
-    case 0: pickDoor1(); unpickDoor2(); unpickDoor3(); break;
-    case 1: pickDoor2(); unpickDoor1(); unpickDoor3(); break;
-    case 2: pickDoor3(); unpickDoor2(); unpickDoor1(); break;
-    default: unpickDoor1(); unpickDoor2(); unpickDoor3(); break;
+    switch(choice){
+
+      case 0: pickDoor1(); unpickDoor2(); unpickDoor3(); break;
+      case 1: pickDoor2(); unpickDoor1(); unpickDoor3(); break;
+      case 2: pickDoor3(); unpickDoor2(); unpickDoor1(); break;
+      default: unpickDoor1(); unpickDoor2(); unpickDoor3(); break;
+
+    }
+
+    refresh = false;
 
   }
 
   if(btnOk.pressed())return choice;
+
+  return -1;
 
 }
 
@@ -530,11 +553,20 @@ void loading(int time){
 void resetAll(int &firstChoice, int &nonePrizeDoor){
 
   tft.fillScreen(ST77XX_BLACK);
+
   inRandomDoor = true;
   inPhase_1 = true;
   resetScreen = true;
+
   firstChoice = -1;
   nonePrizeDoor = -2;
+
+  preferences.putInt("Ttl_Change_Att", Ttl_Change_Att);
+  preferences.putInt("Ttl_NChange_Att", Ttl_NChange_Att);
+  preferences.putInt("Change_Cnt_W", Change_Cnt_W);
+  preferences.putInt("NChange_Cnt_W", NChange_Cnt_W);
+
+  showStored();
 
 }
 
@@ -547,6 +579,8 @@ void changeChoice(int &firstChoice, int &nonePrizeDoor, int prizeDoor){
     drawCoin(prizeDoor);
 
     Serial.println("yaaaaaas win");
+
+    Change_Cnt_W++;
 
     changeDoor = false;
 
@@ -572,15 +606,22 @@ void changeChoice(int &firstChoice, int &nonePrizeDoor, int prizeDoor){
 bool changeChoiceBox(){
 
   static int choice = 1;
+  static bool refresh = true;
 
-  if(btnLeft.pressed()){choice--; if(choice < 0){choice = 1;};}
-  else if(btnRight.pressed()){choice++; if(choice > 1){choice = 0;};}
+  if(btnLeft.pressed()){choice--; refresh = true; if(choice < 0){choice = 1;};}
+  else if(btnRight.pressed()){choice++; refresh = true; if(choice > 1){choice = 0;};}
 
-  switch(choice){
+  if(refresh){
 
-    case 0: tft.fillRect(35, 215, 5, 5, ST77XX_GREEN); tft.fillRect(82, 215, 5, 5, ST77XX_BLACK); break;
-    case 1: tft.fillRect(82, 215, 5, 5, ST77XX_GREEN); tft.fillRect(35, 215, 5, 5, ST77XX_BLACK); break;
-    default: break;
+    switch(choice){
+
+      case 0: tft.fillRect(35, 215, 5, 5, ST77XX_GREEN); tft.fillRect(82, 215, 5, 5, ST77XX_BLACK); break;
+      case 1: tft.fillRect(82, 215, 5, 5, ST77XX_GREEN); tft.fillRect(35, 215, 5, 5, ST77XX_BLACK); break;
+      default: break;
+
+    }
+
+    refresh = false;
 
   }
 
@@ -592,8 +633,8 @@ bool changeChoiceBox(){
     inchangeChoiceBox = false;
     switch(choice){
 
-      case 0: Serial.print("YES change DOOR: "); return true; break;
-      case 1: noChangeDoor = true; Serial.print("NO change DOOR: "); return false; break;
+      case 0: Serial.print("YES change DOOR: "); Ttl_Change_Att++; return true; break;
+      case 1: noChangeDoor = true; Serial.print("NO change DOOR: "); Ttl_NChange_Att++; return false; break;
       default: break;
 
     }
@@ -619,5 +660,26 @@ void changeChoiceDialogue(){
   tft.drawRect(82, 215, 7, 7, ST77XX_GREEN);
 
   inChangeDialogue = false;
+
+}
+
+void showStored(){
+
+  int Ttl_Change_Att = preferences.getInt("Ttl_Change_Att", 0);
+  int Ttl_NChange_Att = preferences.getInt("Ttl_NChange_Att", 0);
+  int Change_Cnt_W = preferences.getInt("Change_Cnt_W", 0);
+  int NChange_Cnt_W = preferences.getInt("NChange_Cnt_W", 0);
+
+  Serial.print("Ttl_Change_Att = ");
+  Serial.println(Ttl_Change_Att);
+
+  Serial.print("Ttl_NChange_Att = ");
+  Serial.println(Ttl_NChange_Att);
+
+  Serial.print("Change_Cnt_W = ");
+  Serial.println(Change_Cnt_W);
+
+  Serial.print("NChange_Cnt_W = ");
+  Serial.println(NChange_Cnt_W);
 
 }
