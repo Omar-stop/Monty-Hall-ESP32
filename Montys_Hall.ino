@@ -4,6 +4,7 @@
 #include <SPI.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_ST7789.h>
+#include <Preferences.h> //for persistent storage :)
 #include "button.h"
 
 #define SCREEN_WIDTH 240
@@ -33,6 +34,14 @@ Button btnLeft(btnLeftPin);
 Button btnRight(btnRightPin);
 Button btnOk(btnOkPin);
 
+// enum Door{
+
+//   door_1 = 0,
+//   door_2 = 1,
+//   door_3 = 2
+
+// }
+
 int randomPrizeDoor = -1;
 
 bool inRandomDoor = true;
@@ -40,6 +49,9 @@ bool inIntroText = true;
 bool inPhase_1 = true;
 bool inOpenNonePrize = false;
 bool resetScreen = true;
+bool inChangeDialogue = false;
+bool inchangeChoiceBox = false;
+bool changeDoor = false;
 
 void setup() {
 
@@ -88,31 +100,49 @@ void loop() {
 
   if(inPhase_1) firstChoice = phase_1();
 
-  if(randomPrizeDoor == firstChoice){ // should change it to open a random door because the game does not end here...
+  // if(randomPrizeDoor == firstChoice){ // should change it to open a random door because the game does not end here...
 
-    tft.fillScreen(ST77XX_BLACK);
-    tft.setCursor(5, 120);
-    tft.setTextSize(2);
-    tft.print("You win!\nwe will reset now ;)");
+  //   tft.fillScreen(ST77XX_BLACK);
+  //   tft.setCursor(5, 120);
+  //   tft.setTextSize(2);
+  //   tft.print("You win!\nwe will reset now ;)");
 
-    delay(3000);
+  //   delay(3000);
 
-    tft.fillScreen(ST77XX_BLACK);
+  //   tft.fillScreen(ST77XX_BLACK);
 
-    inRandomDoor = true;
-    inPhase_1 = true;
-    resetScreen = true;
+  //   inRandomDoor = true;
+  //   inPhase_1 = true;
+  //   resetScreen = true;
 
-    firstChoice = -1;
-    nonePrizeDoor = -2;
+  //   firstChoice = -1;
+  //   nonePrizeDoor = -2;
+
+  // }
+
+  if(inOpenNonePrize){
+
+    loading(3000);
+
+    nonePrizeDoor = openNonePrize(firstChoice, randomPrizeDoor);
+
+    inChangeDialogue = true;
 
   }
 
-  if(inOpenNonePrize){  //maybe i can add a circle that fills itself so that the screen does not appear frozen
+  if(inChangeDialogue){
+  
+    changeChoiceDialogue();
 
-    delay(3000);
+    inchangeChoiceBox = true;
+  
+  }
 
-    nonePrizeDoor = openNonePrize(firstChoice, randomPrizeDoor);
+  if(inchangeChoiceBox) changeDoor = changeChoiceBox();
+
+  if(changeDoor){
+    
+    changeChoice(firstChoice, nonePrizeDoor, randomPrizeDoor);
 
   }
 
@@ -168,7 +198,7 @@ int phase_1(){
 
   if(btnOk.pressed()){
 
-    firstChoiceMarker(firstDoorChoice);
+    ChoiceMarker(firstDoorChoice);
     inPhase_1 = false;
     inOpenNonePrize = true;
     return firstDoorChoice;
@@ -179,13 +209,13 @@ int phase_1(){
 
 }
 
-void firstChoiceMarker(int choice){
+void ChoiceMarker(int choice){
 
   switch (choice) {
   
-    case 0: tft.setCursor(25, 173 - 40); tft.fillRect(115, 173, 10, 10, ST77XX_BLACK); tft.fillRect(205, 173, 10, 10, ST77XX_BLACK); break;
-    case 1: tft.setCursor(115, 173 - 40); tft.fillRect(25, 173, 10, 10, ST77XX_BLACK); tft.fillRect(205, 173, 10, 10, ST77XX_BLACK); break;
-    case 2: tft.setCursor(205, 173 - 40); tft.fillRect(115, 173, 10, 10, ST77XX_BLACK); tft.fillRect(25, 173, 10, 10, ST77XX_BLACK); break;
+    case 0: tft.setCursor(25, 133); tft.fillRect(115, 133, 10, 10, ST77XX_BLACK); tft.fillRect(205, 133, 10, 10, ST77XX_BLACK); break;
+    case 1: tft.setCursor(115, 133); tft.fillRect(25, 133, 10, 10, ST77XX_BLACK); tft.fillRect(205, 133, 10, 10, ST77XX_BLACK); break;
+    case 2: tft.setCursor(205, 133); tft.fillRect(115, 133, 10, 10, ST77XX_BLACK); tft.fillRect(25, 133, 10, 10, ST77XX_BLACK); break;
     default: break;
 
   }
@@ -330,10 +360,23 @@ void openDoor(int num){
 
 }
 
+void drawCoin(int num){
+
+  switch(num){
+
+    case 0: drawCoin_1(); break;
+    case 1: drawCoin_2(); break;
+    case 2: drawCoin_3(); break;
+    default: break;
+
+  }
+
+}
+
 void drawCoin_1(){
 
   tft.fillCircle(30, 125 - 40, 10, ST77XX_YELLOW);
-  tft.setCursor(25, 121);
+  tft.setCursor(25, 121 - 40);
   tft.setTextSize(2);
   tft.setTextColor(ST77XX_BLACK);
   tft.write("$");
@@ -343,7 +386,7 @@ void drawCoin_1(){
 void drawCoin_2(){
 
   tft.fillCircle(120, 125 - 40, 10, ST77XX_YELLOW);
-  tft.setCursor(115, 121);
+  tft.setCursor(115, 121 - 40);
   tft.setTextSize(2);
   tft.setTextColor(ST77XX_BLACK);
   tft.write("$");
@@ -353,7 +396,7 @@ void drawCoin_2(){
 void drawCoin_3(){
 
   tft.fillCircle(210, 125 - 40, 10, ST77XX_YELLOW);
-  tft.setCursor(205, 121);
+  tft.setCursor(205, 121 - 40);
   tft.setTextSize(2);
   tft.setTextColor(ST77XX_BLACK);
   tft.write("$");
@@ -429,12 +472,133 @@ void introText(){
 
 int openNonePrize(int firstDoorChoice, int prizeDoor){
 
-  int nonePrizeDoor = 3 - firstDoorChoice - prizeDoor;
+  int nonePrizeDoor;
+
+  if(firstDoorChoice == prizeDoor){
+
+    do{
+
+      srand(time(0));
+      nonePrizeDoor = rand() % 3;
+
+    }while(nonePrizeDoor == prizeDoor);
+
+    openDoor(nonePrizeDoor);
+    inOpenNonePrize = false;
+    return nonePrizeDoor;
+
+  }
+
+  nonePrizeDoor = 3 - firstDoorChoice - prizeDoor;
 
   openDoor(nonePrizeDoor);
-
   inOpenNonePrize = false;
-
   return nonePrizeDoor;
+
+}
+
+void loading(int time){
+
+  int holdTime = time/4;
+
+  tft.fillRect(85, 200, 10, 10, ST77XX_WHITE);
+  delay(holdTime);
+  tft.fillRect(105, 200, 10, 10, ST77XX_WHITE);
+  delay(holdTime);
+  tft.fillRect(125, 200, 10, 10, ST77XX_WHITE);
+  delay(holdTime);
+  tft.fillRect(145, 200, 10, 10, ST77XX_WHITE);
+  delay(holdTime);
+    
+  tft.fillRect(85, 200, 70, 10, ST77XX_BLACK);
+  delay(500);
+
+}
+
+void changeChoice(int firstChoice, int nonePrizeDoor, int prizeDoor){
+
+
+  if(firstChoice != prizeDoor){
+
+    ChoiceMarker(prizeDoor);
+    openDoor(prizeDoor);
+    drawCoin(prizeDoor);
+
+    Serial.print("yaaaaaas win");
+
+    changeDoor = false;
+
+  }
+
+  else if(firstChoice == prizeDoor){
+
+    int unknownDoor;
+
+    do{
+
+      srand(time(0));
+      unknownDoor = rand() % 3;
+
+    }while(unknownDoor == firstChoice || unknownDoor == nonePrizeDoor);
+
+    Serial.print("noooo win");
+
+    ChoiceMarker(unknownDoor);
+    changeDoor = false;
+
+  }
+
+}
+
+bool changeChoiceBox(){
+
+  static int choice = 1;
+
+  if(btnLeft.pressed()){choice--; if(choice < 0){choice = 1;};}
+  else if(btnRight.pressed()){choice++; if(choice > 1){choice = 0;};}
+
+  switch(choice){
+
+    case 0: tft.fillRect(35, 215, 5, 5, ST77XX_GREEN); tft.fillRect(82, 215, 5, 5, ST77XX_BLACK); break;
+    case 1: tft.fillRect(82, 215, 5, 5, ST77XX_GREEN); tft.fillRect(35, 215, 5, 5, ST77XX_BLACK); break;
+    default: break;
+
+  }
+
+  btnOk.update();
+
+  if(btnOk.pressed()){
+
+    tft.invertDisplay(true);
+    inchangeChoiceBox = false;
+    switch(choice){
+
+      case 0: return true; break;
+      case 1: return false; break;
+      default: break;
+
+    }
+
+  }
+
+  return NULL;
+
+}
+
+void changeChoiceDialogue(){
+
+  tft.setCursor(5, 170);
+  tft.setTextSize(1);
+  tft.print("Would you like to change your choice?");
+
+  tft.setCursor(30, 200);
+  tft.print("yes");
+  tft.drawRect(35, 215, 7, 7, ST77XX_GREEN);
+
+  tft.setCursor(80, 200);
+  tft.print("no");
+  tft.drawRect(82, 215, 7, 7, ST77XX_GREEN);
+
+  inChangeDialogue = false;
 
 }
