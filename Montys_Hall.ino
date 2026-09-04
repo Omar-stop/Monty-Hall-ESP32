@@ -34,12 +34,16 @@ Button btnLeft(btnLeftPin);
 Button btnRight(btnRightPin);
 Button btnOk(btnOkPin);
 
-Preferences preferences;
+Preferences prefs;
 
-int Ttl_Change_Att = 0;
-int Ttl_NChange_Att = 0;
-int Change_Cnt_W = 0;
-int NChange_Cnt_W = 0;
+struct {
+
+  int Ttl_Change_Att = 0;
+  int Ttl_NChange_Att = 0;
+  int Change_Cnt_W = 0;
+  int NChange_Cnt_W = 0;
+
+} stats;
 
 // enum Door{
 
@@ -67,12 +71,9 @@ void setup() {
 
   srand(time(0));
 
-  preferences.begin("store", false);
-
-  Ttl_Change_Att = preferences.getInt("Ttl_Change_Att", 0);
-  Ttl_NChange_Att = preferences.getInt("Ttl_NChange_Att", 0);
-  Change_Cnt_W = preferences.getInt("Change_Cnt_W", 0);
-  NChange_Cnt_W = preferences.getInt("NChange_Cnt_W", 0);
+  prefs.begin("stats", false);
+  prefs.getBytes("stats", &stats, sizeof(stats));
+  prefs.end();
 
   btnLeft.setPinMode();
   btnRight.setPinMode();
@@ -154,7 +155,7 @@ void loop() {
 
     //loading(3000);
 
-    NChange_Cnt_W++;
+    stats.NChange_Cnt_W++;
 
     noChangeDoor = false;
     resetAll(firstChoice, nonePrizeDoor);
@@ -550,6 +551,16 @@ void loading(int time){
 
 }
 
+void storeAll(){
+
+  prefs.begin("stats", false);
+
+  prefs.putBytes("stats", &stats, sizeof(stats));
+
+  prefs.end();
+
+}
+
 void resetAll(int &firstChoice, int &nonePrizeDoor){
 
   tft.fillScreen(ST77XX_BLACK);
@@ -561,10 +572,7 @@ void resetAll(int &firstChoice, int &nonePrizeDoor){
   firstChoice = -1;
   nonePrizeDoor = -2;
 
-  preferences.putInt("Ttl_Change_Att", Ttl_Change_Att);
-  preferences.putInt("Ttl_NChange_Att", Ttl_NChange_Att);
-  preferences.putInt("Change_Cnt_W", Change_Cnt_W);
-  preferences.putInt("NChange_Cnt_W", NChange_Cnt_W);
+  storeAll();
 
   showStored();
 
@@ -580,7 +588,7 @@ void changeChoice(int &firstChoice, int &nonePrizeDoor, int prizeDoor){
 
     Serial.println("yaaaaaas win");
 
-    Change_Cnt_W++;
+    stats.Change_Cnt_W++;
 
     changeDoor = false;
 
@@ -633,8 +641,8 @@ bool changeChoiceBox(){
     inchangeChoiceBox = false;
     switch(choice){
 
-      case 0: Serial.print("YES change DOOR: "); Ttl_Change_Att++; return true; break;
-      case 1: noChangeDoor = true; Serial.print("NO change DOOR: "); Ttl_NChange_Att++; return false; break;
+      case 0: Serial.print("YES change DOOR: "); stats.Ttl_Change_Att++; return true; break;
+      case 1: noChangeDoor = true; Serial.print("NO change DOOR: "); stats.Ttl_NChange_Att++; return false; break;
       default: break;
 
     }
@@ -665,21 +673,16 @@ void changeChoiceDialogue(){
 
 void showStored(){
 
-  int Ttl_Change_Att = preferences.getInt("Ttl_Change_Att", 0);
-  int Ttl_NChange_Att = preferences.getInt("Ttl_NChange_Att", 0);
-  int Change_Cnt_W = preferences.getInt("Change_Cnt_W", 0);
-  int NChange_Cnt_W = preferences.getInt("NChange_Cnt_W", 0);
-
   Serial.print("Ttl_Change_Att = ");
-  Serial.println(Ttl_Change_Att);
+  Serial.println(stats.Ttl_Change_Att);
 
   Serial.print("Ttl_NChange_Att = ");
-  Serial.println(Ttl_NChange_Att);
+  Serial.println(stats.Ttl_NChange_Att);
 
   Serial.print("Change_Cnt_W = ");
-  Serial.println(Change_Cnt_W);
+  Serial.println(stats.Change_Cnt_W);
 
   Serial.print("NChange_Cnt_W = ");
-  Serial.println(NChange_Cnt_W);
+  Serial.println(stats.NChange_Cnt_W);
 
 }
