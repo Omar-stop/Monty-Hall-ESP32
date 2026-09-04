@@ -19,12 +19,7 @@
 
 Adafruit_ST7789 tft = Adafruit_ST7789(TFT_CS, TFT_DC, TFT_RST);
 
-#define BLACK 0x0000
-#define WHITE 0xFFFF
-#define RED 0xF800
-#define GREEN 0x07E0
-#define BLUE 0x001F
-#define YELLOW 0xFFE0
+#define Brown 0x1861
 
 #define btnLeftPin 32
 #define btnRightPin 33
@@ -45,18 +40,17 @@ struct {
 
 } stats;
 
-// enum Door{
+enum doorNum{
 
-//   door_1 = 0,
-//   door_2 = 1,
-//   door_3 = 2
+  door_1 = 0,
+  door_2 = 1,
+  door_3 = 2
 
-// }
+};
 
 int randomPrizeDoor = -1;
 
 bool inRandomDoor = true;
-bool inIntroText = true;
 bool inPhase_1 = true;
 bool inOpenNonePrize = false;
 bool resetScreen = true;
@@ -87,11 +81,8 @@ void setup() {
   tft.init(SCREEN_WIDTH, SCREEN_HEIGHT);
   tft.setRotation(3);
   tft.fillScreen(ST77XX_BLACK);
-  
-  // tft.drawLine(120, 0, 120, 240, ST77XX_WHITE); //Y-axis
-  // tft.drawLine(0, 120, 240, 120, ST77XX_WHITE); //X-axis
-  // tft.drawLine(0, 0, 240, 240, ST77XX_WHITE); //Diagonal up left to down right
-  // tft.drawLine(0, 240, 240, 0, ST77XX_WHITE); //Diagonal down left to up right
+
+  //introText();  remove coment later
 
 }
 
@@ -112,15 +103,13 @@ void loop() {
 
   }
 
-  //if(inIntroText) introText(); Remove the comment later
-
   if(inRandomDoor) randomPrizeDoor = randomDoor();
 
   if(inPhase_1) firstChoice = phase_1();
 
   if(inOpenNonePrize){
 
-    loading(3000);
+    loading(1000);
 
     nonePrizeDoor = openNonePrize(firstChoice, randomPrizeDoor);
 
@@ -133,6 +122,7 @@ void loop() {
     changeChoiceDialogue();
 
     inchangeChoiceBox = true;
+    btnOk.update();
   
   }
 
@@ -146,56 +136,41 @@ void loop() {
 
   if(noChangeDoor){
 
-  if(firstChoice == randomPrizeDoor){
+    if(firstChoice == randomPrizeDoor){
 
-    openDoor(firstChoice);
-    drawCoin(firstChoice);
+      openDoor(firstChoice);
+      drawCoin(firstChoice);
 
-    Serial.println("yaaaaaas win");
+      Serial.println("yaaaaaas win");
 
-    //loading(3000);
+      loading(1000);
 
-    stats.NChange_Cnt_W++;
+      stats.NChange_Cnt_W++;
 
-    noChangeDoor = false;
-    resetAll(firstChoice, nonePrizeDoor);
+      noChangeDoor = false;
+      resetAll(firstChoice, nonePrizeDoor);
+
+    }
+
+    else if(firstChoice != randomPrizeDoor){
+
+      Serial.println("noooo lose");
+
+      openDoor(firstChoice);
+      loser(firstChoice);
+      
+      loading(1000);
+
+      noChangeDoor = false;
+      resetAll(firstChoice, nonePrizeDoor);
+
+    }
 
   }
 
-  else if(firstChoice != randomPrizeDoor){
-
-    Serial.println("noooo lose");
-    
-    //loading(3000);
-
-    noChangeDoor = false;
-    resetAll(firstChoice, nonePrizeDoor);
-
-  }
-
-}
-
-  //int changeChoice(firstChoice, randomPrizeDoor); new function, complete it
-
-  // tft.setCursor(5, 190);
-  // tft.setTextSize(2);
-  // tft.setTextColor(ST77XX_RED);
-  // tft.print("After that door opened/nWould you like to change/nyour choice?");
-    
   btnLeft.update();
   btnRight.update();
   btnOk.update();
-
-  // if(holdOn(3000)){
-
-  //   Serial.print("first choice = ");
-  //   Serial.println(firstChoice);
-  //   Serial.print("Random prize door = ");
-  //   Serial.println(randomPrizeDoor);
-  //   Serial.print("None prize door = ");
-  //   Serial.println(nonePrizeDoor);
-
-  // }
 
 }
 
@@ -204,16 +179,16 @@ int chooseDoor(){
   static int choice = 0;
   static bool refresh = true;
 
-  if(btnLeft.pressed()){choice--; refresh = true; if(choice < 0){choice = 2;};}
-  else if(btnRight.pressed()){choice++; refresh = true; if(choice > 2){choice = 0;};}
+  if(btnLeft.pressed() && holdOn(200)){choice--; refresh = true; if(choice < 0){choice = 2;};}
+  else if(btnRight.pressed() && holdOn(200)){choice++; refresh = true; if(choice > 2){choice = 0;};}
 
   if(refresh){
 
     switch(choice){
 
-      case 0: pickDoor1(); unpickDoor2(); unpickDoor3(); break;
-      case 1: pickDoor2(); unpickDoor1(); unpickDoor3(); break;
-      case 2: pickDoor3(); unpickDoor2(); unpickDoor1(); break;
+      case door_1: pickDoor1(); unpickDoor2(); unpickDoor3(); break;
+      case door_2: pickDoor2(); unpickDoor1(); unpickDoor3(); break;
+      case door_3: pickDoor3(); unpickDoor2(); unpickDoor1(); break;
       default: unpickDoor1(); unpickDoor2(); unpickDoor3(); break;
 
     }
@@ -251,9 +226,9 @@ void ChoiceMarker(int choice){
 
   switch (choice) {
   
-    case 0: tft.setCursor(25, 133); tft.fillRect(115, 133, 10, 10, ST77XX_BLACK); tft.fillRect(205, 133, 10, 10, ST77XX_BLACK); break;
-    case 1: tft.setCursor(115, 133); tft.fillRect(25, 133, 10, 10, ST77XX_BLACK); tft.fillRect(205, 133, 10, 10, ST77XX_BLACK); break;
-    case 2: tft.setCursor(205, 133); tft.fillRect(115, 133, 10, 10, ST77XX_BLACK); tft.fillRect(25, 133, 10, 10, ST77XX_BLACK); break;
+    case door_1: tft.setCursor(25, 133); tft.fillRect(115, 133, 10, 10, ST77XX_BLACK); tft.fillRect(205, 133, 10, 10, ST77XX_BLACK); break;
+    case door_2: tft.setCursor(115, 133); tft.fillRect(25, 133, 10, 10, ST77XX_BLACK); tft.fillRect(205, 133, 10, 10, ST77XX_BLACK); break;
+    case door_3: tft.setCursor(205, 133); tft.fillRect(115, 133, 10, 10, ST77XX_BLACK); tft.fillRect(25, 133, 10, 10, ST77XX_BLACK); break;
     default: break;
 
   }
@@ -264,31 +239,22 @@ void ChoiceMarker(int choice){
 
 }
 
-//Cool function I found on a wokwi project
-void testfillrects(uint16_t color1, uint16_t color2) {
-  tft.fillScreen(ST77XX_BLACK);
-  for (int16_t x=tft.width()-1; x > 6; x-=6) {
-    tft.fillRect(tft.width()/2 -x/2, tft.height()/2 -x/2 , x, x, color1);
-    tft.drawRect(tft.width()/2 -x/2, tft.height()/2 -x/2 , x, x, color2);
-  }
-}
-
 void openDoor1(){
 
-  tft.fillRect(15, 90 - 40, 30, 60, 0x1861); tft.fillCircle(35, 127 - 40, 2.5, ST77XX_WHITE); tft.drawRect(19, 135 - 40, 22, 12, ST77XX_YELLOW); tft.drawRect(19, 95 - 40, 22, 25, ST77XX_YELLOW);
+  tft.fillRect(15, 90 - 40, 30, 60, Brown); tft.fillCircle(35, 127 - 40, 2.5, ST77XX_WHITE); tft.drawRect(19, 135 - 40, 22, 12, ST77XX_YELLOW); tft.drawRect(19, 95 - 40, 22, 25, ST77XX_YELLOW);
 
   delay(200);
 
   tft.fillRect(15, 90 - 40, 30, 60, ST77XX_BLACK);
 
 
-  tft.fillRect(15, 90 - 40, 30/2, 60, 0x1861); tft.fillCircle(35-12, 127 - 40, 1, ST77XX_WHITE); tft.drawRect(19, 135 - 40, 22/3, 12, ST77XX_YELLOW); tft.drawRect(19, 95 - 40, 22/3, 25, ST77XX_YELLOW);
+  tft.fillRect(15, 90 - 40, 30/2, 60, Brown); tft.fillCircle(35-12, 127 - 40, 1, ST77XX_WHITE); tft.drawRect(19, 135 - 40, 22/3, 12, ST77XX_YELLOW); tft.drawRect(19, 95 - 40, 22/3, 25, ST77XX_YELLOW);
 
   delay(100);
 
   tft.fillRect(15, 90 - 40, 30, 60, ST77XX_BLACK);
 
-  tft.fillRect(15, 90 - 40, 2, 60, 0x1861);
+  tft.fillRect(15, 90 - 40, 2, 60, Brown);
 
   delay(200);
   
@@ -296,20 +262,20 @@ void openDoor1(){
 
 void openDoor2(){
 
-  tft.fillRect(105, 90 - 40, 30, 60, 0x1861); tft.fillCircle(125, 127 - 40, 2.5, ST77XX_WHITE); tft.drawRect(109, 135 - 40, 22, 12, ST77XX_YELLOW); tft.drawRect(109, 95 - 40, 22, 25, ST77XX_YELLOW);
+  tft.fillRect(105, 90 - 40, 30, 60, Brown); tft.fillCircle(125, 127 - 40, 2.5, ST77XX_WHITE); tft.drawRect(109, 135 - 40, 22, 12, ST77XX_YELLOW); tft.drawRect(109, 95 - 40, 22, 25, ST77XX_YELLOW);
 
   delay(200);
 
   tft.fillRect(105, 90 - 40, 30, 60, ST77XX_BLACK);
 
 
-  tft.fillRect(105, 90 - 40, 30/2, 60, 0x1861); tft.fillCircle(125-12, 127 - 40, 1, ST77XX_WHITE); tft.drawRect(109, 135 - 40, 22/3, 12, ST77XX_YELLOW); tft.drawRect(109, 95 - 40, 22/3, 25, ST77XX_YELLOW);
+  tft.fillRect(105, 90 - 40, 30/2, 60, Brown); tft.fillCircle(125-12, 127 - 40, 1, ST77XX_WHITE); tft.drawRect(109, 135 - 40, 22/3, 12, ST77XX_YELLOW); tft.drawRect(109, 95 - 40, 22/3, 25, ST77XX_YELLOW);
 
   delay(100);
 
   tft.fillRect(105, 90 - 40, 30, 60, ST77XX_BLACK);
 
-  tft.fillRect(105, 90 - 40, 2, 60, 0x1861);
+  tft.fillRect(105, 90 - 40, 2, 60, Brown);
 
   delay(200);
   
@@ -317,20 +283,20 @@ void openDoor2(){
 
 void openDoor3(){
 
-  tft.fillRect(195, 90 - 40, 30, 60, 0x1861); tft.fillCircle(215, 127 - 40, 2.5, ST77XX_WHITE); tft.drawRect(199, 135 - 40, 22, 12, ST77XX_YELLOW); tft.drawRect(199, 95 - 40, 22, 25, ST77XX_YELLOW);
+  tft.fillRect(195, 90 - 40, 30, 60, Brown); tft.fillCircle(215, 127 - 40, 2.5, ST77XX_WHITE); tft.drawRect(199, 135 - 40, 22, 12, ST77XX_YELLOW); tft.drawRect(199, 95 - 40, 22, 25, ST77XX_YELLOW);
 
   delay(200);
 
   tft.fillRect(195, 90 - 40, 30, 60, ST77XX_BLACK);
 
 
-  tft.fillRect(195, 90 - 40, 30/2, 60, 0x1861); tft.fillCircle(215-12, 127 - 40, 1, ST77XX_WHITE); tft.drawRect(199, 135 - 40, 22/3, 12, ST77XX_YELLOW); tft.drawRect(199, 95 - 40, 22/3, 25, ST77XX_YELLOW);
+  tft.fillRect(195, 90 - 40, 30/2, 60, Brown); tft.fillCircle(215-12, 127 - 40, 1, ST77XX_WHITE); tft.drawRect(199, 135 - 40, 22/3, 12, ST77XX_YELLOW); tft.drawRect(199, 95 - 40, 22/3, 25, ST77XX_YELLOW);
 
   delay(100);
 
   tft.fillRect(195, 90 - 40, 30, 60, ST77XX_BLACK);
 
-  tft.fillRect(195, 90 - 40, 2, 60, 0x1861);
+  tft.fillRect(195, 90 - 40, 2, 60, Brown);
 
   delay(200);
   
@@ -389,9 +355,9 @@ void openDoor(int num){
 
   switch (num) {
   
-    case 0: openDoor1(); break;
-    case 1: openDoor2(); break;
-    case 2: openDoor3(); break;
+    case door_1: openDoor1(); break;
+    case door_2: openDoor2(); break;
+    case door_3: openDoor3(); break;
     default: break;
 
   }
@@ -402,9 +368,9 @@ void drawCoin(int num){
 
   switch(num){
 
-    case 0: drawCoin_1(); break;
-    case 1: drawCoin_2(); break;
-    case 2: drawCoin_3(); break;
+    case door_1: drawCoin_1(); break;
+    case door_2: drawCoin_2(); break;
+    case door_3: drawCoin_3(); break;
     default: break;
 
   }
@@ -413,8 +379,9 @@ void drawCoin(int num){
 
 void drawCoin_1(){
 
-  tft.fillCircle(30, 125 - 40, 10, ST77XX_YELLOW);
-  tft.setCursor(25, 121 - 40);
+  tft.fillCircle(30, 85, 10, ST77XX_ORANGE);
+  tft.fillCircle(30, 85, 7, ST77XX_YELLOW);
+  tft.setCursor(25, 79);
   tft.setTextSize(2);
   tft.setTextColor(ST77XX_BLACK);
   tft.write("$");
@@ -423,8 +390,9 @@ void drawCoin_1(){
 
 void drawCoin_2(){
 
-  tft.fillCircle(120, 125 - 40, 10, ST77XX_YELLOW);
-  tft.setCursor(115, 121 - 40);
+  tft.fillCircle(120, 85, 10, ST77XX_ORANGE);
+  tft.fillCircle(120, 85, 7, ST77XX_YELLOW);
+  tft.setCursor(115, 79);
   tft.setTextSize(2);
   tft.setTextColor(ST77XX_BLACK);
   tft.write("$");
@@ -433,8 +401,9 @@ void drawCoin_2(){
 
 void drawCoin_3(){
 
-  tft.fillCircle(210, 125 - 40, 10, ST77XX_YELLOW);
-  tft.setCursor(205, 121 - 40);
+  tft.fillCircle(210, 85, 10, ST77XX_ORANGE);
+  tft.fillCircle(210, 85, 7, ST77XX_YELLOW);
+  tft.setCursor(205, 79);
   tft.setTextSize(2);
   tft.setTextColor(ST77XX_BLACK);
   tft.write("$");
@@ -443,22 +412,22 @@ void drawCoin_3(){
 
 void drawDoor_1(){
 
-  //Door frame                        ; Door knob                               ; Lower Rectangle                             ; Upper rectangle
-  tft.fillRect(15, 90 - 40, 30, 60, 0x1861); tft.fillCircle(35, 127 - 40, 2, ST77XX_WHITE); tft.drawRect(19, 135 - 40, 22, 12, ST77XX_YELLOW); tft.drawRect(19, 95 - 40, 22, 25, ST77XX_YELLOW);
+  //Door frame                            ; Door knob                                    ; Lower Rectangle                                  ; Upper rectangle
+  tft.fillRect(15, 90 - 40, 30, 60, Brown); tft.fillCircle(35, 127 - 40, 2, ST77XX_WHITE); tft.drawRect(19, 135 - 40, 22, 12, ST77XX_YELLOW); tft.drawRect(19, 95 - 40, 22, 25, ST77XX_YELLOW);
 
 }
 
 void drawDoor_2(){
 
-  //Door frame                         ; Door knob                                ; Lower Rectangle                              ; Upper rectangle
-  tft.fillRect(105, 90 - 40, 30, 60, 0x1861); tft.fillCircle(125, 127 - 40, 2, ST77XX_WHITE); tft.drawRect(109, 135 - 40, 22, 12, ST77XX_YELLOW); tft.drawRect(109, 95 - 40, 22, 25, ST77XX_YELLOW);
+  //Door frame                             ; Door knob                                     ; Lower Rectangle                                   ; Upper rectangle
+  tft.fillRect(105, 90 - 40, 30, 60, Brown); tft.fillCircle(125, 127 - 40, 2, ST77XX_WHITE); tft.drawRect(109, 135 - 40, 22, 12, ST77XX_YELLOW); tft.drawRect(109, 95 - 40, 22, 25, ST77XX_YELLOW);
 
 }
 
 void drawDoor_3(){
 
-  //Door frame                         ; Door knob                                ; Lower Rectangle                              ; Upper rectangle
-  tft.fillRect(195, 90 - 40, 30, 60, 0x1861); tft.fillCircle(215, 127 - 40, 2, ST77XX_WHITE); tft.drawRect(199, 135 - 40, 22, 12, ST77XX_YELLOW); tft.drawRect(199, 95 - 40, 22, 25, ST77XX_YELLOW);
+  //Door frame                             ; Door knob                                     ; Lower Rectangle                                   ; Upper rectangle
+  tft.fillRect(195, 90 - 40, 30, 60, Brown); tft.fillCircle(215, 127 - 40, 2, ST77XX_WHITE); tft.drawRect(199, 135 - 40, 22, 12, ST77XX_YELLOW); tft.drawRect(199, 95 - 40, 22, 25, ST77XX_YELLOW);
 
 }
 
@@ -491,7 +460,7 @@ void introText(){
   tft.setCursor(5, 120);
   tft.setTextSize(2);
   tft.fillScreen(ST77XX_BLACK);
-  tft.print("Behind one of three doors there is a \n prize");
+  tft.print("Behind one of three\ndoors there is a\nprize");
 
   delay(5000);
 
@@ -503,7 +472,6 @@ void introText(){
   delay(5000);
 
   tft.fillScreen(ST77XX_BLACK);
-  inIntroText = false;
 
 }
 
@@ -537,16 +505,16 @@ void loading(int time){
 
   int holdTime = time/4;
 
-  tft.fillRect(85, 200, 10, 10, ST77XX_WHITE);
+  tft.fillRect(125, 210, 10, 10, ST77XX_RED);
   delay(holdTime);
-  tft.fillRect(105, 200, 10, 10, ST77XX_WHITE);
+  tft.fillRect(145, 210, 10, 10, ST77XX_WHITE);
   delay(holdTime);
-  tft.fillRect(125, 200, 10, 10, ST77XX_WHITE);
+  tft.fillRect(165, 210, 10, 10, ST77XX_BLUE);
   delay(holdTime);
-  tft.fillRect(145, 200, 10, 10, ST77XX_WHITE);
+  tft.fillRect(185, 210, 10, 10, ST77XX_ORANGE);
   delay(holdTime);
     
-  tft.fillRect(85, 200, 70, 10, ST77XX_BLACK);
+  tft.fillRect(125, 210, 70, 10, ST77XX_BLACK);
   delay(500);
 
 }
@@ -588,6 +556,8 @@ void changeChoice(int &firstChoice, int &nonePrizeDoor, int prizeDoor){
 
     Serial.println("yaaaaaas win");
 
+    loading(1000);
+
     stats.Change_Cnt_W++;
 
     changeDoor = false;
@@ -603,6 +573,11 @@ void changeChoice(int &firstChoice, int &nonePrizeDoor, int prizeDoor){
     Serial.println("noooo lose");
 
     ChoiceMarker(unknownDoor);
+    openDoor(unknownDoor);
+    loser(unknownDoor);
+
+    loading(1000);
+
     changeDoor = false;
 
     resetAll(firstChoice, nonePrizeDoor);
@@ -616,15 +591,15 @@ bool changeChoiceBox(){
   static int choice = 1;
   static bool refresh = true;
 
-  if(btnLeft.pressed()){choice--; refresh = true; if(choice < 0){choice = 1;};}
-  else if(btnRight.pressed()){choice++; refresh = true; if(choice > 1){choice = 0;};}
+  if(btnLeft.pressed() && holdOn(200)){choice--; refresh = true; if(choice < 0){choice = 1;};}
+  else if(btnRight.pressed() && holdOn(200)){choice++; refresh = true; if(choice > 1){choice = 0;};}
 
   if(refresh){
 
     switch(choice){
 
-      case 0: tft.fillRect(35, 215, 5, 5, ST77XX_GREEN); tft.fillRect(82, 215, 5, 5, ST77XX_BLACK); break;
-      case 1: tft.fillRect(82, 215, 5, 5, ST77XX_GREEN); tft.fillRect(35, 215, 5, 5, ST77XX_BLACK); break;
+      case 0: tft.fillRect(37, 217, 3, 3, ST77XX_CYAN); tft.fillRect(83, 216, 4, 4, ST77XX_BLACK); break;
+      case 1: tft.fillRect(84, 217, 3, 3, ST77XX_CYAN); tft.fillRect(36, 216, 4, 4, ST77XX_BLACK); break;
       default: break;
 
     }
@@ -633,11 +608,8 @@ bool changeChoiceBox(){
 
   }
 
-  btnOk.update();
-
   if(btnOk.pressed()){
 
-    tft.invertDisplay(true);
     inchangeChoiceBox = false;
     switch(choice){
 
@@ -684,5 +656,18 @@ void showStored(){
 
   Serial.print("NChange_Cnt_W = ");
   Serial.println(stats.NChange_Cnt_W);
+
+}
+
+void loser(int doorNum){
+
+  switch (doorNum) {
+    
+    case door_1: tft.setCursor(22, 70); tft.setTextSize(2); tft.setTextColor(ST77XX_RED); tft.write(";-;"); break;
+    case door_2: tft.setCursor(112, 70); tft.setTextSize(2); tft.setTextColor(ST77XX_RED); tft.write(";-;"); break;
+    case door_3: tft.setCursor(202, 70); tft.setTextSize(2); tft.setTextColor(ST77XX_RED); tft.write(";-;"); break;
+    default: break;
+
+  }
 
 }
