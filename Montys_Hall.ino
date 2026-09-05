@@ -4,7 +4,7 @@
 #include <SPI.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_ST7789.h>
-#include <Preferences.h> //for persistent storage :)
+#include <Preferences.h>
 #include "button.h"
 
 #define SCREEN_WIDTH 240
@@ -59,6 +59,9 @@ bool inchangeChoiceBox = false;
 bool changeDoor = false;
 bool noChangeDoor = false;
 
+bool refreshDoor = true;
+bool refreshChoiceBox = true;
+
 void setup() {
 
   Serial.begin(115200);
@@ -68,6 +71,8 @@ void setup() {
   prefs.begin("stats", false);
   prefs.getBytes("stats", &stats, sizeof(stats));
   prefs.end();
+
+  if(stats.Ttl_Change_Att + stats.Ttl_NChange_Att > 100) stats = {};
 
   btnLeft.setPinMode();
   btnRight.setPinMode();
@@ -82,7 +87,7 @@ void setup() {
   tft.setRotation(3);
   tft.fillScreen(ST77XX_BLACK);
 
-  //introText();  remove coment later
+  introText();
 
 }
 
@@ -95,7 +100,9 @@ void loop() {
 
     drawDoor_1();
     drawDoor_2();
-    drawDoor_3();  
+    drawDoor_3();
+
+    winRatios();
 
     drawChoiceBoxs();
 
@@ -177,12 +184,11 @@ void loop() {
 int chooseDoor(){
 
   static int choice = 0;
-  static bool refresh = true;
 
-  if(btnLeft.pressed() && holdOn(200)){choice--; refresh = true; if(choice < 0){choice = 2;};}
-  else if(btnRight.pressed() && holdOn(200)){choice++; refresh = true; if(choice > 2){choice = 0;};}
+  if(btnLeft.pressed() && holdOn(200)){choice--; refreshDoor = true; if(choice < 0){choice = 2;};}
+  else if(btnRight.pressed() && holdOn(200)){choice++; refreshDoor = true; if(choice > 2){choice = 0;};}
 
-  if(refresh){
+  if(refreshDoor){
 
     switch(choice){
 
@@ -193,7 +199,7 @@ int chooseDoor(){
 
     }
 
-    refresh = false;
+    refreshDoor = false;
 
   }
 
@@ -451,20 +457,20 @@ int randomDoor(){
 
 void introText(){
 
-  tft.setCursor(5, 120);
+  tft.setCursor(5, 30);
   tft.setTextSize(2);
   tft.print("Welcome to monty's hall game!");
 
   delay(5000);
 
-  tft.setCursor(5, 120);
+  tft.setCursor(5, 30);
   tft.setTextSize(2);
   tft.fillScreen(ST77XX_BLACK);
   tft.print("Behind one of three\ndoors there is a\nprize");
 
   delay(5000);
 
-  tft.setCursor(5, 120);
+  tft.setCursor(5, 30);
   tft.setTextSize(2);
   tft.fillScreen(ST77XX_BLACK);
   tft.print("Choose the correct one to win");
@@ -536,6 +542,8 @@ void resetAll(int &firstChoice, int &nonePrizeDoor){
   inRandomDoor = true;
   inPhase_1 = true;
   resetScreen = true;
+  refreshDoor = true;
+  refreshChoiceBox = true;
 
   firstChoice = -1;
   nonePrizeDoor = -2;
@@ -589,12 +597,11 @@ void changeChoice(int &firstChoice, int &nonePrizeDoor, int prizeDoor){
 bool changeChoiceBox(){
 
   static int choice = 1;
-  static bool refresh = true;
 
-  if(btnLeft.pressed() && holdOn(200)){choice--; refresh = true; if(choice < 0){choice = 1;};}
-  else if(btnRight.pressed() && holdOn(200)){choice++; refresh = true; if(choice > 1){choice = 0;};}
+  if(btnLeft.pressed() && holdOn(200)){choice--; refreshChoiceBox = true; if(choice < 0){choice = 1;};}
+  else if(btnRight.pressed() && holdOn(200)){choice++; refreshChoiceBox = true; if(choice > 1){choice = 0;};}
 
-  if(refresh){
+  if(refreshChoiceBox){
 
     switch(choice){
 
@@ -604,7 +611,7 @@ bool changeChoiceBox(){
 
     }
 
-    refresh = false;
+    refreshChoiceBox = false;
 
   }
 
@@ -669,5 +676,17 @@ void loser(int doorNum){
     default: break;
 
   }
+
+}
+
+void winRatios(){
+
+  int ChangeWinRatio = stats.Ttl_Change_Att > 0 ? (stats.Change_Cnt_W * 100/stats.Ttl_Change_Att) : 0;
+  int NoChangeWinRatio = stats.Ttl_NChange_Att > 0 ? (stats.NChange_Cnt_W * 100/stats.Ttl_NChange_Att) : 0;
+
+  tft.setCursor(5, 5);
+  tft.setTextSize(1);
+  tft.setTextColor(ST77XX_YELLOW);
+  tft.printf("Change Door Wins = %d%%\nNo Change Door Wins = %d%%", ChangeWinRatio, NoChangeWinRatio);
 
 }
